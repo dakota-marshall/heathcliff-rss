@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import selenium
+import selenium, sqlite3
 from selenium import webdriver
 
 
@@ -12,3 +12,4 @@ def get_comic_link(date):
     comic_link = comic_obj.get_attribute("src")
 
     return comic_link
+
