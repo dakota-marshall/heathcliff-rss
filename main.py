@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 
-import sqlite3, datetime
+import sqlite3, datetime, threading
 from email import utils
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 def get_comic_link(day, month, year):
     # Start Firefox WebDriver instance and set to headless
+    webdriver_url = "http://firefox:4444"
     firefox_options = webdriver.FirefoxOptions()
-    firefox_options.headless = True
-    driver = webdriver.Firefox(options=firefox_options)
+    driver = webdriver.Remote(command_executor=webdriver_url, options=firefox_options)
 
     # Set and grab todays link
     link = f"""https://www.gocomics.com/heathcliff/{year}/{month}/{day}"""
@@ -126,7 +126,9 @@ def generate_rss():
     feed.write(footer_tags)
     feed.close()
 
-def main():
+def main_thread():
+    # Generate a thread with a timer of 5hrs
+    threading.Timer(18000, main_thread).start()
 
     # Get today's date
     date = datetime.datetime.now()
@@ -143,6 +145,10 @@ def main():
 
     # Generate New RSS Post
     generate_rss()
+
+def main():
+    # Call main thread
+    main_thread()
 
 if __name__ == "__main__":
   main()
