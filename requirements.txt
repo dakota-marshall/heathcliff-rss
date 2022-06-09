@@ -1,3 +1,1 @@
-selenium
-sqlite3
-datetime
+selenium==4.2.0
