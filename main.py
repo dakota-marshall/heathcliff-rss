@@ -42,7 +42,7 @@ def database_save(date, url, src_url):
     # Write new entry if noo
     # Generate an rfc 2822 timestamp for todays post
     rfc2822_date = utils.format_datetime(datetime.datetime.now())
-    cursor.execute(f"""INSERT INTO posts (date, , rfc_2822_date, img_url, src_url) VALUES ('{date}', '{rfc2822_date}', '{url}', '{src_url}')""")
+    cursor.execute(f"""INSERT INTO posts (date, rfc_2822_date, img_url, src_url) VALUES ('{date}', '{rfc2822_date}', '{url}', '{src_url}')""")
     conn.commit()
     conn.close()
     return 0
