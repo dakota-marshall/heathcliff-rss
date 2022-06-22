@@ -13,16 +13,18 @@ To deploy this container, there are currently a few assumptions:
 
 The following environment variables need to be configured for the container to function. These can be found from your service account private key in firebase:
 
-`FIREBASE_TYPE`
-`FIREBASE_PROJECT_ID`
-`FIREBASE_PRIV_KEY_ID`
-`FIREBASE_PRIV_KEY`
-`FIREBASE_CLIENT_EMAIL`
-`FIREBASE_CLIENT_ID`
-`FIREBASE_AUTH_URI`
-`FIREBASE_TOKEN_URI`
-`FIREBASE_PROVIDER_CERT_URL`
-`FIREBASE_CLIENT_CERT_URL`
+```
+FIREBASE_TYPE
+FIREBASE_PROJECT_ID
+FIREBASE_PRIV_KEY_ID
+FIREBASE_PRIV_KEY
+FIREBASE_CLIENT_EMAIL
+FIREBASE_CLIENT_ID
+FIREBASE_AUTH_URI
+FIREBASE_TOKEN_URI
+FIREBASE_PROVIDER_CERT_URL
+FIREBASE_CLIENT_CERT_URL
+```
 
 ## To-Do
 
