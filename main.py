@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sqlite3, datetime, threading, firebase_admin
+import datetime, threading, firebase_admin
 from email import utils
 from firebase_admin import credentials
 from firebase_admin import firestore
