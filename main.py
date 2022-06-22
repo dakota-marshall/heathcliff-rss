@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import datetime, threading, firebase_admin
+import os, datetime, threading, firebase_admin
 from email import utils
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -134,8 +134,21 @@ def main_thread():
     # Generate a thread with a timer of 5hrs
     threading.Timer(18000, main_thread).start()
 
+    # Generate Firebase cert JSON from environment variables
+    firebase_config = {
+        "type": os.environ[u'FIREBASE_TYPE'],
+        "project_id": os.environ[u'FIREBASE_PROJECT_ID'],
+        "private_key_id": os.environ[u'FIREBASE_PRIV_KEY_ID'],
+        "private_key": os.environ[u'FIREBASE_PRIV_KEY'],
+        "client_email": os.environ[u'FIREBASE_CLIENT_EMAIL'],
+        "client_id": os.environ[u'FIREBASE_CLIENT_ID'],
+        "auth_uri": os.environ[u'FIREBASE_AUTH_URI'],
+        "token_uri": os.environ[u'FIREBASE_TOKEN_URI'],
+        "auth_provider_x509_cert_url": os.environ[u'FIREBASE_PROVIDER_CERT_URL'],
+        "client_x509_cert_url": os.environ[u'FIREBASE_CLIENT_CERT_URL']
+    }
     # Load Firebase credentials
-    cred = credentials.Certificate("serviceAccountKey.json")
+    cred = credentials.Certificate(firebase_config)
     firebase_admin.initialize_app(cred)
 
     # Get today's date

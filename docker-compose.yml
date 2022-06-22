@@ -18,3 +18,5 @@ services:
       depends_on:
         firefox:
           condition: service_healthy
+      env_file:
+        - .env
