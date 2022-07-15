@@ -31,4 +31,5 @@ FIREBASE_CLIENT_CERT_URL
 - [x] Write logic to push and pull `heathcliff.db` from some form of cloud storage. This way the SQLite file is not ephemeral and can be pulled on container creation and updates can be pushed every day. This will likely be setup to accept an AWS S3 Bucket.
 - [ ] Write logic to check for more than just today's comic. For example, check the last 10 or 20 days to make sure the database didnt miss a day for some reason.
 - [ ] Read WebDriver URL from environment variable
+- [x] Publish the RSS feed via HTTP using django or flask.
 
