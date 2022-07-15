@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 
-import sqlite3, datetime, threading
+import os, datetime, threading, firebase_admin
+from flask import Flask, Response
 from email import utils
+from firebase_admin import credentials
+from firebase_admin import firestore
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+
+flask = Flask(__name__)
 
 def get_comic_link(day, month, year):
     # Start Firefox WebDriver instance and set to headless
@@ -25,38 +30,37 @@ def get_comic_link(day, month, year):
 
 def database_save(date, url, src_url):
 
-    # Create SQLite connection
-    # This assumes the 'posts' table has been made with this schema ("date" TEXT, "img_url" TEXT)
-    conn = sqlite3.connect('heathcliff.db')
-    cursor = conn.cursor()
+    # Connect to firestore
+    firestore_db = firestore.client()
 
-    # Query if date is already in DB
-    cursor.execute(f"""SELECT * FROM posts WHERE date = '{date}'""")
-    result = cursor.fetchall()
-    
-    # Return if we get anything back from the query
-    if any(result):
-        conn.close()
-        return 1
-    
-    # Write new entry if noo
     # Generate an rfc 2822 timestamp for todays post
     rfc2822_date = utils.format_datetime(datetime.datetime.now())
-    cursor.execute(f"""INSERT INTO posts (date, rfc_2822_date, img_url, src_url) VALUES ('{date}', '{rfc2822_date}', '{url}', '{src_url}')""")
-    conn.commit()
-    conn.close()
+
+    # Prep JSON data
+    data = {
+        u'date': date,
+        u'rfc_2822_date': rfc2822_date,
+        u'img_url': url,
+        u'src_url': src_url
+    }
+
+    # Write document to DB if post does NOT exist
+    existing_post = firestore_db.collection(u'posts').document(date).get()
+    if not existing_post.exists:
+        firestore_db.collection(u'posts').document(date).set(data)
+    else:
+        return 1
+
     return 0
 
 def query_comics():
 
-    # Create SQLite connection
-    # This assumes the 'posts' table has been made with this schema ("date" TEXT, "img_url" TEXT)
-    conn = sqlite3.connect('heathcliff.db')
-    cursor = conn.cursor()
+    # Connect to firestore
+    firestore_db = firestore.client()
 
-    cursor.execute(f"""SELECT * FROM posts ORDER BY date DESC LIMIT 20""")
-    result = cursor.fetchall()
-    conn.close()
+    # Query all documents in DB
+    query = firestore_db.collection(u'posts').order_by(u'date', direction=firestore.Query.DESCENDING).limit(20)
+    result = query.stream()
 
     return result
 
@@ -91,6 +95,8 @@ def generate_rss():
     # Get post list
     post_list = query_comics()
 
+    #
+
     # Overwrite the rss file with the header, then reopen the file and start appending the posts
     feed = open("heathcliff.rss", "w")
     feed.write(header_tags)
@@ -100,10 +106,11 @@ def generate_rss():
 
     # Loop through each post and prep the data
     for post in post_list:
-        date = post[0]
-        rfc_date = post[1]
-        img_url = post[2]
-        src_url = post[3]
+        post = post.to_dict()
+        date = post['date']
+        rfc_date = post['rfc_2822_date']
+        img_url = post['img_url']
+        src_url = post['src_url']
 
         post_text = f"""<item>
     <title><![CDATA[Heathcliff by George Gately for {date}]]></title>
@@ -126,9 +133,24 @@ def generate_rss():
     feed.write(footer_tags)
     feed.close()
 
-def main_thread():
-    # Generate a thread with a timer of 5hrs
-    threading.Timer(18000, main_thread).start()
+def rss_thread():
+
+    # Generate Firebase cert JSON from environment variables
+    firebase_config = {
+        "type": os.environ[u'FIREBASE_TYPE'],
+        "project_id": os.environ[u'FIREBASE_PROJECT_ID'],
+        "private_key_id": os.environ[u'FIREBASE_PRIV_KEY_ID'],
+        "private_key": os.environ[u'FIREBASE_PRIV_KEY'],
+        "client_email": os.environ[u'FIREBASE_CLIENT_EMAIL'],
+        "client_id": os.environ[u'FIREBASE_CLIENT_ID'],
+        "auth_uri": os.environ[u'FIREBASE_AUTH_URI'],
+        "token_uri": os.environ[u'FIREBASE_TOKEN_URI'],
+        "auth_provider_x509_cert_url": os.environ[u'FIREBASE_PROVIDER_CERT_URL'],
+        "client_x509_cert_url": os.environ[u'FIREBASE_CLIENT_CERT_URL']
+    }
+    # Load Firebase credentials
+    cred = credentials.Certificate(firebase_config)
+    firebase_admin.initialize_app(cred)
 
     # Get today's date
     date = datetime.datetime.now()
@@ -146,9 +168,26 @@ def main_thread():
     # Generate New RSS Post
     generate_rss()
 
-def main():
-    # Call main thread
-    main_thread()
+    # Generate another thread with a timer of 5hrs
+    threading.Timer(18000, rss_thread).start()
+
+@flask.route("/")
+def give_feed():
+    try:
+        file = open('heathcliff.rss','r')
+        rss = file.read()
+        file.close()
+
+        return Response(rss, mimetype='text/xml')
+    except:
+        print("ERROR: Error reading heathcliff.rss")
+        return "Error Reading RSS Feed..."
 
 if __name__ == "__main__":
-  main()
+
+    # Call rss thread
+    threading.Thread(target=rss_thread).start()
+
+    # Call flask thread
+    threading.Thread(target=lambda: flask.run(host='0.0.0.0', port='80', debug=False, use_reloader=False)).start()
+
