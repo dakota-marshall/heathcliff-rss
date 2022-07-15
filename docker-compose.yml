@@ -18,3 +18,7 @@ services:
       depends_on:
         firefox:
           condition: service_healthy
+      env_file:
+        - .env
+      ports:
+        - 8080:80
