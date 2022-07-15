@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
 import os, datetime, threading, firebase_admin
+from flask import Flask, Response
 from email import utils
 from firebase_admin import credentials
 from firebase_admin import firestore
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+
+flask = Flask(__name__)
 
 def get_comic_link(day, month, year):
     # Start Firefox WebDriver instance and set to headless
@@ -130,9 +133,7 @@ def generate_rss():
     feed.write(footer_tags)
     feed.close()
 
-def main_thread():
-    # Generate a thread with a timer of 5hrs
-    threading.Timer(18000, main_thread).start()
+def rss_thread():
 
     # Generate Firebase cert JSON from environment variables
     firebase_config = {
@@ -167,9 +168,26 @@ def main_thread():
     # Generate New RSS Post
     generate_rss()
 
-def main():
-    # Call main thread
-    main_thread()
+    # Generate another thread with a timer of 5hrs
+    threading.Timer(18000, rss_thread).start()
+
+@flask.route("/")
+def give_feed():
+    try:
+        file = open('heathcliff.rss','r')
+        rss = file.read()
+        file.close()
+
+        return Response(rss, mimetype='text/xml')
+    except:
+        print("ERROR: Error reading heathcliff.rss")
+        return "Error Reading RSS Feed..."
 
 if __name__ == "__main__":
-  main()
+
+    # Call rss thread
+    threading.Thread(target=rss_thread).start()
+
+    # Call flask thread
+    threading.Thread(target=lambda: flask.run(host='0.0.0.0', port='80', debug=False, use_reloader=False)).start()
+
