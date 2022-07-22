@@ -13,8 +13,7 @@ services:
 
     rss-feed:
       container_name: rss-feed
-      image: heathcliff
-      build: ./
+      image: dakota.marshall/heathcliff-rss:latest
       depends_on:
         firefox:
           condition: service_healthy
