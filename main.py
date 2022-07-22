@@ -21,10 +21,13 @@ def get_comic_link(day, month, year):
     driver.get(link)
     
     # Grab the comic image link from the webpage
-    comic_obj = driver.find_element_by_xpath('//img[contains(@alt, "Heathcliff Comic Strip for")]')
-    comic_link = comic_obj.get_attribute("src")
-
-    driver.quit()
+    try:
+        comic_obj = driver.find_element_by_xpath('//img[contains(@alt, "Heathcliff Comic Strip for")]')
+        comic_link = comic_obj.get_attribute("src")
+        driver.quit()
+    except:
+        print("ERROR: Error parsing for comic, post likely doesnt exist yet for today")
+        return "error", "error"
 
     return comic_link, link
 
@@ -49,8 +52,10 @@ def database_save(date, url, src_url):
     if not existing_post.exists:
         firestore_db.collection(u'posts').document(date).set(data)
     else:
+        print(f"{date}: Post already found in database.")
         return 1
 
+    print(f"{date}: Saved new post")
     return 0
 
 def query_comics():
@@ -162,11 +167,13 @@ def rss_thread():
     # Get today's comic link
     comic_link, src_link = get_comic_link(day, month, year)
     
-    #Write URL to database
-    database_save(date_string, comic_link, src_link)
-
-    # Generate New RSS Post
-    generate_rss()
+    # Ensure that we got a valid link before continuing
+    if comic_link != "error":
+        #Write URL to database
+        database_save(date_string, comic_link, src_link)
+        
+        # Generate New RSS Post
+        generate_rss()
 
     # Generate another thread with a timer of 5hrs
     threading.Timer(18000, rss_thread).start()
