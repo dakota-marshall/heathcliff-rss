@@ -44,7 +44,7 @@ docker-build:
 deploy:
   stage: deploy
   script:
-    - curl http://portainer.horsemeat.rocks/api/stacks/webhooks/ce1c78f0-8f6a-4004-a9ee-dcc99f41230c
+    - curl https://portainer.horsemeat.rocks/api/stacks/webhooks/ce1c78f0-8f6a-4004-a9ee-dcc99f41230c
   only:
     variables:
       - $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
