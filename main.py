@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 
-import os, datetime, threading, firebase_admin
+import os, datetime, threading, pymongo
 from flask import Flask, Response
 from email import utils
-from firebase_admin import credentials
-from firebase_admin import firestore
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 flask = Flask(__name__)
+
+# Establish a connection to the MongoDB server
+client = pymongo.MongoClient("mongodb://localhost:27017/")
+
+# Select the database and collection to use
+db = client["test_database"]
+col = db["test_collection"]
 
 def get_comic_link(day, month, year):
     # Start Firefox WebDriver instance and set to headless
@@ -33,12 +38,6 @@ def get_comic_link(day, month, year):
 
 def database_save(date, url, src_url):
 
-    # Connect to firestore
-    firestore_db = firestore.client()
-
-    # Generate an rfc 2822 timestamp for todays post
-    rfc2822_date = utils.format_datetime(datetime.datetime.now())
-
     # Prep JSON data
     data = {
         u'date': date,
@@ -47,10 +46,10 @@ def database_save(date, url, src_url):
         u'src_url': src_url
     }
 
-    # Write document to DB if post does NOT exist
-    existing_post = firestore_db.collection(u'posts').document(date).get()
-    if not existing_post.exists:
-        firestore_db.collection(u'posts').document(date).set(data)
+    # Write document to database if it does not already exist
+    existing_post = col.find_one({'date': date})
+    if not existing_post:
+        col.insert_one(data)
     else:
         print(f"{date}: Post already found in database.")
         return 1
@@ -60,12 +59,8 @@ def database_save(date, url, src_url):
 
 def query_comics():
 
-    # Connect to firestore
-    firestore_db = firestore.client()
-
-    # Query all documents in DB
-    query = firestore_db.collection(u'posts').order_by(u'date', direction=firestore.Query.DESCENDING).limit(20)
-    result = query.stream()
+    # Query all documents in the collection
+    result = col.find({}, {'date': 1, 'rfc_2822_date': 1, 'img_url': 1, 'src_url': 1}).sort([('date', pymongo.DESCENDING)]).limit(20)
 
     return result
 
