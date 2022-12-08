@@ -8,9 +8,9 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 flask = Flask(__name__)
 
-mongo_url = os.environ[u'MONGODB_URL']
-mongo_username = os.environ[u'MONGODB_USERNAME']
-mongo_password = os.environ[u'MONGODB_PASSWORD']
+mongo_url = os.getenv('MONGODB_URL', 'mongodb://mongo:27017')
+mongo_username = os.getenv('MONGODB_USERNAME', '')
+mongo_password = os.getenv('MONGODB_PASSWORD', '')
 
 # Establish a connection to the MongoDB server
 client = pymongo.MongoClient(mongo_url)
