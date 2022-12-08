@@ -8,8 +8,12 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 flask = Flask(__name__)
 
+mongo_url = os.environ[u'MONGODB_URL']
+mongo_username = os.environ[u'MONGODB_USERNAME']
+mongo_password = os.environ[u'MONGODB_PASSWORD']
+
 # Establish a connection to the MongoDB server
-client = pymongo.MongoClient("mongodb://localhost:27017/")
+client = pymongo.MongoClient(mongo_url)
 
 # Select the database and collection to use
 db = client["heathcliff"]
@@ -40,10 +44,10 @@ def database_save(date, url, src_url):
 
     # Prep JSON data
     data = {
-        u'date': date,
-        u'rfc_2822_date': rfc2822_date,
-        u'img_url': url,
-        u'src_url': src_url
+        'date': date,
+        'rfc_2822_date': rfc2822_date,
+        'img_url': url,
+        'src_url': src_url
     }
 
     # Write document to database if it does not already exist
@@ -58,9 +62,10 @@ def database_save(date, url, src_url):
     return 0
 
 def query_comics():
-
+    result = []
     # Query all documents in the collection
-    result = col.find({}, {'date': 1, 'rfc_2822_date': 1, 'img_url': 1, 'src_url': 1}).sort([('date', pymongo.DESCENDING)]).limit(20)
+    for post in col.find({}).sort([('date', pymongo.DESCENDING)]).limit(20):
+        result.append(post)
 
     return result
 
@@ -134,23 +139,6 @@ def generate_rss():
     feed.close()
 
 def rss_thread():
-
-    # Generate Firebase cert JSON from environment variables
-    firebase_config = {
-        "type": os.environ[u'FIREBASE_TYPE'],
-        "project_id": os.environ[u'FIREBASE_PROJECT_ID'],
-        "private_key_id": os.environ[u'FIREBASE_PRIV_KEY_ID'],
-        "private_key": os.environ[u'FIREBASE_PRIV_KEY'],
-        "client_email": os.environ[u'FIREBASE_CLIENT_EMAIL'],
-        "client_id": os.environ[u'FIREBASE_CLIENT_ID'],
-        "auth_uri": os.environ[u'FIREBASE_AUTH_URI'],
-        "token_uri": os.environ[u'FIREBASE_TOKEN_URI'],
-        "auth_provider_x509_cert_url": os.environ[u'FIREBASE_PROVIDER_CERT_URL'],
-        "client_x509_cert_url": os.environ[u'FIREBASE_CLIENT_CERT_URL']
-    }
-    # Load Firebase credentials
-    cred = credentials.Certificate(firebase_config)
-    firebase_admin.initialize_app(cred)
 
     # Get today's date
     date = datetime.datetime.now()
