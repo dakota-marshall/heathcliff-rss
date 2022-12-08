@@ -42,6 +42,9 @@ def get_comic_link(day, month, year):
 
 def database_save(date, url, src_url):
 
+    # Generate an rfc 2822 timestamp for todays post
+    rfc2822_date = utils.format_datetime(datetime.datetime.now())
+
     # Prep JSON data
     data = {
         'date': date,
