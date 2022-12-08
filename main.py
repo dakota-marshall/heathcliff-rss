@@ -114,7 +114,6 @@ def generate_rss():
 
     # Loop through each post and prep the data
     for post in post_list:
-        post = post.to_dict()
         date = post['date']
         rfc_date = post['rfc_2822_date']
         img_url = post['img_url']
