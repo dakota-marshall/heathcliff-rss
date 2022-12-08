@@ -12,8 +12,8 @@ flask = Flask(__name__)
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 
 # Select the database and collection to use
-db = client["test_database"]
-col = db["test_collection"]
+db = client["heathcliff"]
+col = db["posts"]
 
 def get_comic_link(day, month, year):
     # Start Firefox WebDriver instance and set to headless
